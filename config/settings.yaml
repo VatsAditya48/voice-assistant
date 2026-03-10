@@ -1,0 +1,21 @@
+assistant:
+  name: "Friday"
+  wake_word: "hey friday"
+
+voice:
+  rate: 175
+  volume: 1.0
+  voice_id: 0  # 0 = male, 1 = female (system dependent)
+
+email:
+  smtp_server: "smtp.gmail.com"
+  smtp_port: 587
+  sender_email: "your_email@gmail.com"
+  sender_password: "your_app_password"
+
+whatsapp_contacts:
+  John: "+1234567890"
+  Mom: "+0987654321"
+
+vosk:
+  model_path: "models/vosk-model-small-en-us-0.15"
