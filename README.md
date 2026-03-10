@@ -15,6 +15,8 @@ A fully functional **offline-first** voice AI assistant for **Windows 10/11** th
 | 📩 **WhatsApp Messaging** | Send WhatsApp messages via **pywhatkit** |
 | 📧 **Email** | Send emails via Gmail (SMTP + App Password) |
 | 🧠 **Natural Language Understanding** | Regex + keyword intent parsing |
+| 💬 **Conversational Chat** | Rule-based chat engine — jokes, fun facts, Q&A, math, small talk |
+| 🖥️ **Chat GUI** | Dark-theme Tkinter window — type or speak, see full history |
 
 ---
 
@@ -89,6 +91,13 @@ voice:
   volume: 1.0      # 0.0 – 1.0
   voice_id: 0      # 0 = male, 1 = female
 
+# Chat backend — "rules" works fully offline (default)
+# Switch to "ollama" to use a local LLM (Ollama must be running)
+chat:
+  backend: "rules"        # "rules" | "ollama"
+  ollama_model: "llama3"  # only used when backend = "ollama"
+  ollama_url: "http://localhost:11434"
+
 email:
   smtp_server: "smtp.gmail.com"
   smtp_port: 587
@@ -118,18 +127,27 @@ vscode: "C:\\Users\\%USERNAME%\\AppData\\Local\\Programs\\Microsoft VS Code\\Cod
 
 ## ▶️ Usage
 
+### Voice-only mode (default)
+
 ```bash
 python main.py
 ```
 
 Say the **wake word** (default: *"hey friday"*) and then speak your command.
 
-### 💬 Example Voice Commands
+### Graphical chat window
 
-| Command | Description |
+```bash
+python main.py --gui
+```
+
+A dark-themed chat window opens.  Type a message and press **Enter** (or click **Send**), or click **🎙** to speak directly into the window.  All assistant features — alarms, apps, email, chat — are available in both modes.
+
+### 💬 Example Commands & Chat Phrases
+
+| Phrase | What happens |
 |---|---|
 | *"Hey Friday, open Chrome"* | Launch Google Chrome |
-| *"Hey Friday, open Notepad"* | Launch Notepad |
 | *"Hey Friday, set alarm for 7:30 AM"* | Set an alarm |
 | *"Hey Friday, wake me up at 6 AM"* | Set an alarm |
 | *"Hey Friday, remind me to call Mom at 5 PM"* | Set a reminder |
@@ -140,6 +158,11 @@ Say the **wake word** (default: *"hey friday"*) and then speak your command.
 | *"Hey Friday, send email to john@example.com subject Meeting body See you at 3"* | Send email |
 | *"Hey Friday, list alarms"* | Show scheduled alarms/reminders |
 | *"Hey Friday, exit"* | Shut down the assistant |
+| *"Tell me a joke"* | Hear a joke |
+| *"How are you?"* | Small talk |
+| *"What can you do?"* | List capabilities |
+| *"What is 12 + 8?"* | Quick arithmetic |
+| *"Tell me a fun fact"* | Random fun fact |
 
 ---
 
@@ -147,12 +170,14 @@ Say the **wake word** (default: *"hey friday"*) and then speak your command.
 
 ```
 voice-assistant/
-├── main.py                  # Entry point — main listening loop
+├── main.py                  # Entry point — voice loop + --gui flag
 ├── assistant/
 │   ├── __init__.py
 │   ├── listener.py          # Microphone → text (Vosk STT)
 │   ├── speaker.py           # Text → voice (pyttsx3 TTS)
 │   ├── intent_parser.py     # Parse commands into intents & entities
+│   ├── chat.py              # Conversational chat engine (rules / Ollama)
+│   ├── gui.py               # Tkinter dark-theme chat window
 │   ├── app_launcher.py      # Open Windows applications
 │   ├── scheduler.py         # Alarms & reminders (APScheduler + win10toast)
 │   └── messenger.py         # Email (smtplib) & WhatsApp (pywhatkit)
@@ -163,6 +188,7 @@ voice-assistant/
 ├── setup.py
 └── tests/
     ├── test_intent_parser.py
+    ├── test_chat.py
     ├── test_app_launcher.py
     ├── test_scheduler.py
     └── test_messenger.py
@@ -206,6 +232,10 @@ pytest tests/ -v
 ### Windows toast notifications not appearing
 - Ensure `win10toast` is installed: `pip install win10toast`.
 - Notifications require Windows 10 or later.
+
+### Chat responses feel limited
+- The default `backend: "rules"` uses offline pattern matching.
+- For smarter, free-form responses install [Ollama](https://ollama.ai), pull a model (`ollama pull llama3`), then set `chat.backend: "ollama"` in `config/settings.yaml`.
 
 ---
 

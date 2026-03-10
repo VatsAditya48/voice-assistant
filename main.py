@@ -1,16 +1,28 @@
 """
 main.py — Entry point for the Friday voice AI assistant.
 
-Runs a continuous listening loop that:
+Voice-only mode (default)::
+
+    python main.py
+
+Graphical chat window::
+
+    python main.py --gui
+
+In voice mode the assistant:
   1. Listens for the configured wake word.
   2. Accepts a follow-up voice command.
   3. Parses the command into an intent.
   4. Dispatches to the appropriate handler.
   5. Vocalizes the response.
 
-Exit by saying "exit", "quit", "stop", or "goodbye".
+In GUI mode a Tkinter chat window opens.  The user can type or click the
+microphone button to speak.
+
+Exit by saying / typing "exit", "quit", "stop", or "goodbye".
 """
 
+import argparse
 import logging
 import os
 import sys
@@ -18,6 +30,7 @@ from datetime import datetime
 
 import yaml  # type: ignore
 
+from assistant.chat import ChatEngine
 from assistant.intent_parser import IntentParser
 from assistant.speaker import Speaker
 from assistant.app_launcher import AppLauncher
@@ -59,6 +72,7 @@ class Assistant:
         settings = _load_settings()
         assistant_cfg = settings.get("assistant", {})
         voice_cfg = settings.get("voice", {})
+        chat_cfg = settings.get("chat", {})
 
         self.name: str = assistant_cfg.get("name", "Friday")
         self.wake_word: str = assistant_cfg.get("wake_word", "hey friday").lower()
@@ -72,6 +86,11 @@ class Assistant:
         self.launcher = AppLauncher()
         self.scheduler = Scheduler()
         self.messenger = Messenger()
+        self.chat_engine = ChatEngine(
+            backend=chat_cfg.get("backend", "rules"),
+            ollama_model=chat_cfg.get("ollama_model", "llama3"),
+            ollama_url=chat_cfg.get("ollama_url", "http://localhost:11434"),
+        )
 
         # Listener is imported here so the rest of the assistant works even if
         # vosk / pyaudio are not installed (useful for testing).
@@ -93,8 +112,17 @@ class Assistant:
     # Dispatch table
     # ------------------------------------------------------------------
 
-    def _handle(self, intent: dict) -> str:
-        """Dispatch an intent dict to the correct handler and return a reply."""
+    def _handle(self, intent: dict, raw_text: str = "") -> str:
+        """Dispatch an intent dict to the correct handler and return a reply.
+
+        Parameters
+        ----------
+        intent:
+            Structured intent produced by :class:`IntentParser`.
+        raw_text:
+            The original speech/text string.  Used as the chat prompt when
+            no specific intent is matched.
+        """
         name = intent["intent"]
         entities = intent.get("entities", {})
 
@@ -143,15 +171,32 @@ class Assistant:
         if name == "exit":
             return "__EXIT__"
 
-        # unknown
-        return (
-            "I did not understand that. Try saying something like: "
-            "'open Chrome', 'set alarm for 7 AM', or 'what time is it'."
-        )
+        # Anything unrecognised → conversational chat fallback
+        return self.chat_engine.respond(raw_text)
 
     # ------------------------------------------------------------------
     # Main loop
     # ------------------------------------------------------------------
+
+    def run_gui(self) -> None:
+        """Open the graphical chat window (Tkinter)."""
+        from assistant.gui import AssistantGUI
+
+        def handle_text(text: str) -> str:
+            intent = self.parser.parse(text)
+            logger.info("GUI intent: %s", intent)
+            return self._handle(intent, raw_text=text)
+
+        def listen_once() -> str:
+            return self._get_listener().listen(timeout_seconds=10)
+
+        gui = AssistantGUI(
+            handle_fn=handle_text,
+            listen_fn=listen_once,
+            speak_fn=self.speaker.speak,
+            assistant_name=self.name,
+        )
+        gui.run()
 
     def run(self) -> None:
         """Start the continuous listening loop."""
@@ -190,7 +235,7 @@ class Assistant:
             intent = self.parser.parse(command)
             logger.info("Intent: %s", intent)
 
-            reply = self._handle(intent)
+            reply = self._handle(intent, raw_text=command)
 
             if reply == "__EXIT__":
                 self._shutdown()
@@ -209,10 +254,29 @@ class Assistant:
 
 
 def main() -> None:
+    parser = argparse.ArgumentParser(
+        description="Friday — local voice AI assistant",
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+        epilog=(
+            "Examples:\n"
+            "  python main.py          # voice-only mode\n"
+            "  python main.py --gui    # graphical chat window\n"
+        ),
+    )
+    parser.add_argument(
+        "--gui",
+        action="store_true",
+        help="Open the graphical chat window instead of voice-only mode.",
+    )
+    args = parser.parse_args()
+
     _configure_logging()
     assistant = Assistant()
     try:
-        assistant.run()
+        if args.gui:
+            assistant.run_gui()
+        else:
+            assistant.run()
     except KeyboardInterrupt:
         print("\nInterrupted by user.")
         assistant.scheduler.shutdown()

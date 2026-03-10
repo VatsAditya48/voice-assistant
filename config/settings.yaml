@@ -7,6 +7,14 @@ voice:
   volume: 1.0
   voice_id: 0  # 0 = male, 1 = female (system dependent)
 
+# Chat backend configuration
+# backend: "rules"   — offline rule-based responses (default, no extra setup)
+# backend: "ollama"  — route to a locally-running Ollama LLM (must be running)
+chat:
+  backend: "rules"
+  ollama_model: "llama3"
+  ollama_url: "http://localhost:11434"
+
 email:
   smtp_server: "smtp.gmail.com"
   smtp_port: 587
