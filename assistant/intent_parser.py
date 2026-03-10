@@ -37,9 +37,26 @@ _EXIT_PATTERNS = re.compile(
     re.IGNORECASE,
 )
 
-# Time query
+# Time query — formal and colloquial phrasings
+# Matches, e.g.:
+#   "what time is it"           "what's the time"
+#   "tell me the time"          "current time"
+#   "how much time is it"       "do you know the time"
+#   "time please"               "give me the time"
+#   "what's the time right now" "can you tell me the time"
 _TIME_PATTERNS = re.compile(
-    r"\b(what(\'?s|\s+is)\s+(the\s+)?time|what\s+time\s+is\s+it|tell\s+me\s+the\s+time|current\s+time)\b",
+    r"\b("
+    r"what(\'?s|\s+is)\s+(the\s+)?time"          # what's the time / what is the time
+    r"|what\s+time\s+is\s+it"                      # what time is it
+    r"|tell\s+me\s+the\s+time"                     # tell me the time
+    r"|current\s+time"                             # current time
+    r"|how\s+much\s+time\s+is\s+it(?!\s+\w)"      # how much time is it (not "is it gonna …")
+    r"|do\s+you\s+know\s+(what\s+time\s+it\s+is|the\s+time)"  # do you know the time
+    r"|give\s+me\s+the\s+time"                     # give me the time
+    r"|time\s+please"                              # time please
+    r"|can\s+you\s+tell\s+me\s+the\s+time"        # can you tell me the time
+    r"|what\'?s\s+the\s+time\s+(right\s+now|now)" # what's the time right now
+    r")\b",
     re.IGNORECASE,
 )
 

@@ -58,6 +58,38 @@ class TestTimeDate:
     def test_tell_me_the_time(self, parser):
         assert parser.parse("tell me the time")["intent"] == "time"
 
+    def test_whats_the_time(self, parser):
+        assert parser.parse("what's the time")["intent"] == "time"
+
+    def test_current_time(self, parser):
+        assert parser.parse("current time")["intent"] == "time"
+
+    # Colloquial / informal time queries
+    def test_how_much_time_is_it(self, parser):
+        assert parser.parse("how much time is it")["intent"] == "time"
+
+    def test_how_much_time_is_it_gonna_take_is_not_time(self, parser):
+        # "how much time is it gonna take" is a duration question, not a time query
+        assert parser.parse("how much time is it gonna take")["intent"] != "time"
+
+    def test_do_you_know_the_time(self, parser):
+        assert parser.parse("do you know the time")["intent"] == "time"
+
+    def test_do_you_know_what_time_it_is(self, parser):
+        assert parser.parse("do you know what time it is")["intent"] == "time"
+
+    def test_give_me_the_time(self, parser):
+        assert parser.parse("give me the time")["intent"] == "time"
+
+    def test_time_please(self, parser):
+        assert parser.parse("time please")["intent"] == "time"
+
+    def test_can_you_tell_me_the_time(self, parser):
+        assert parser.parse("can you tell me the time")["intent"] == "time"
+
+    def test_whats_the_time_right_now(self, parser):
+        assert parser.parse("what's the time right now")["intent"] == "time"
+
     def test_what_is_the_date(self, parser):
         assert parser.parse("what is today's date")["intent"] == "date"
 

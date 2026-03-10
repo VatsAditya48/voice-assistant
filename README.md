@@ -28,6 +28,19 @@ A fully functional **offline-first** voice AI assistant for **Windows 10/11** th
 
 ---
 
+## ⏱️ Estimated Setup Time
+
+| Step | Time |
+|---|---|
+| Install Python dependencies (`pip install -r requirements.txt`) | ~2–5 min |
+| Download Vosk speech model (~40 MB, auto on first run) | ~1–3 min |
+| Edit `config/settings.yaml` (name, email, contacts) | ~5 min |
+| **Total** | **~10–15 min** |
+
+> Already have Python and pip set up? You can be up and running in under 10 minutes.
+
+---
+
 ## 🚀 Installation
 
 ### 1. Clone the repository
